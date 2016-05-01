@@ -88,11 +88,11 @@ void CubeGenerator::generate()
             float y = plane[u + v*Slices][0];
             float z = plane[u + v*Slices][1];
 
-            Positions[offset0 + u + v*Slices] = glm::vec3(-x, y, z);
+            Positions[offset0 + u + v*Slices] = glm::vec3(-x, y, -z);
             Normals  [offset0 + u + v*Slices] = glm::vec3(-1, 0, 0);
             TexCoords[offset0 + u + v*Slices] = uvs[u + v*Slices];
             
-            Positions[offset1 + u + v*Slices] = glm::vec3( x, y,-z);
+            Positions[offset1 + u + v*Slices] = glm::vec3(x, y, z);
             Normals  [offset1 + u + v*Slices] = glm::vec3( 1, 0, 0);
             TexCoords[offset1 + u + v*Slices] = uvs[u + v*Slices];
         }

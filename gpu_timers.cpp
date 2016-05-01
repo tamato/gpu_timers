@@ -44,7 +44,7 @@ ProgramObject CubeShader;
 const unsigned int CubeCount = 10;
 glm::mat4x4 Models[CubeCount];
 glm::vec4 Colors[CubeCount];
-GLuint NormalMap = 0;
+GLuint NormalMaps[CubeCount];
 
 void errorCallback(int error, const char* description)
 {
@@ -232,15 +232,15 @@ void initCubes(){
     }
 
     png_t img = {0};
-    png_open_file_read(&img, (DataDirectory + "NM13.png").c_str());
+    png_open_file_read(&img, (DataDirectory + "skyline-buildings-new-york-skyscrapers.png").c_str());
     unsigned char* img_data;
     img_data = new unsigned char[img.width * img.height * img.bpp];
     png_get_data(&img, img_data);
     png_close_file(&img);
     
     glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, &NormalMap);
-    glBindTexture(GL_TEXTURE_2D, NormalMap);
+    glGenTextures(CubeCount, NormalMaps);
+    glBindTexture(GL_TEXTURE_2D, NormalMaps[0]);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid*)img_data);
@@ -274,7 +274,7 @@ void renderCubes(){
     glEnable(GL_CULL_FACE);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, NormalMap);
+    glBindTexture(GL_TEXTURE_2D, NormalMaps[0]);
 
     CubeShader.bind();
     CubeShader.setMatrix44((const float*)&Camera, "View");
@@ -309,7 +309,7 @@ void runloop(){
 
 void shutdown(){
 
-    glDeleteTextures(1, &NormalMap);
+    glDeleteTextures(CubeCount, NormalMaps);
     CubeShader.shutdown();
     Cube.shutdown();
 
