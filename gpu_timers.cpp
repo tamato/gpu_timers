@@ -16,6 +16,7 @@
 #include "common/meshobject.h"
 #include "common/cubegenerator.h"
 #include "common/renderable.h"
+#include "common/memory_info.h"
 
 #include <pnglite.h>
 
@@ -41,7 +42,7 @@ glm::vec2 PrevMousePos;
 
 Renderable Cube;
 ProgramObject CubeShader;
-const unsigned int CubeCount = 10;
+const unsigned int CubeCount = 15;
 glm::mat4x4 Models[CubeCount];
 glm::vec4 Colors[CubeCount];
 GLuint NormalMaps[CubeCount];
@@ -207,6 +208,7 @@ void initView(){
 void initCubes(){
     ogle::CubeGenerator shape;
     shape.scale(1.f);
+    shape.tessellation_density(1024);
     shape.generate();
 
     MeshBuffer buffer;
@@ -222,7 +224,7 @@ void initCubes(){
     shaders[GL_FRAGMENT_SHADER] = DataDirectory + "cube.frag";
     CubeShader.init(shaders);
 
-    for (int i=0; i<CubeCount; ++i)
+    for (unsigned int i=0; i<CubeCount; ++i)
     {   
         float randval = 2;
         glm::vec4 color(glm::linearRand(0.f,1.f),glm::linearRand(0.f,1.f),glm::linearRand(0.f,1.f), 1.f); 
@@ -235,16 +237,26 @@ void initCubes(){
     png_open_file_read(&img, (DataDirectory + "skyline-buildings-new-york-skyscrapers.png").c_str());
     unsigned char* img_data;
     img_data = new unsigned char[img.width * img.height * img.bpp];
+
+    std::cout << "---------------------------------" << std::endl;
+    std::cout << "Image size: " << ((img.width * img.height * img.bpp) / 1024 / 1024) << endl;
+    std::cout << "---------------------------------" << std::endl;
+
     png_get_data(&img, img_data);
     png_close_file(&img);
     
     glActiveTexture(GL_TEXTURE0);
     glGenTextures(CubeCount, NormalMaps);
-    glBindTexture(GL_TEXTURE_2D, NormalMaps[0]);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid*)img_data);
-    glFlush();
+
+    for (unsigned int i=0; i<CubeCount; ++i){
+        // std::cout << "Loading number: " << i << " out of " << CubeCount << std::endl;
+        glBindTexture(GL_TEXTURE_2D, NormalMaps[i]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, (const GLvoid*)img_data);
+        glFlush();
+        memory_info_print(memory_info_report_limits(), memory_info_report_eviction());
+    }
     
     glBindTexture(GL_TEXTURE_2D, 0);
     delete [] img_data;
@@ -257,8 +269,17 @@ void init(int argc, char* argv[]){
     ogle::Debug::init();
     png_init(0,0);
 
+    memory_info_init();
+    std::cout << "initial" << std::endl;
+    MemoryLimits ml = memory_info_report_limits();
+    MemoryEvictionInfo mei = memory_info_report_eviction();
+    memory_info_print(ml);
+    memory_info_print(mei);
+
     initCubes();
     initView();
+
+    std::cout << "============ Loading complete ========" << std::endl;
 }
 
 void update(){
@@ -274,7 +295,6 @@ void renderCubes(){
     glEnable(GL_CULL_FACE);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, NormalMaps[0]);
 
     CubeShader.bind();
     CubeShader.setMatrix44((const float*)&Camera, "View");
@@ -283,6 +303,8 @@ void renderCubes(){
 
     for (int i=0; i<CubeCount; ++i)
     {
+        glBindTexture(GL_TEXTURE_2D, NormalMaps[i]);
+
         CubeShader.setMatrix44((const float*)&Models[i], "Model");
         CubeShader.setVec4((const float*)&Colors[i], "Diffuse");
         Cube.render();
@@ -290,11 +312,16 @@ void renderCubes(){
 }
 
 void render(){
+    static int i =0;
     glClearColor( 0,0,0,0 );
     glClearDepth( 1 );
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     renderCubes();
+
+    memory_info_print(memory_info_report_limits(), memory_info_report_eviction());
+    if (i > 10) exit(1);
+    i += 1;
 }
 
 void runloop(){

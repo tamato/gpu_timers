@@ -1,15 +1,14 @@
 /*
     Simple class to help with testing memory limits
 */
-#ifndef MEMORY_INFO_H
-#define MEMORY_INFO_H
+#pragma once
 
 #include <stdint.h> // int32_t
 
 namespace ogle
 {
     // a value of -1 means it is not supported or not set
-    struct MemoryEvictionIfno
+    struct MemoryEvictionInfo
     {
         int32_t count;  // count of total evictions seen by system
         int32_t size;   // size of total video memory evicted (in kb)
@@ -30,13 +29,14 @@ namespace ogle
         int32_t largest_aux;    // largest auxiliary free block
     };
 
-    struct MemoryInfo
-    {
-        // find which (if any required extensions are supported, a OpenGL context MUST be current before calling this)
-        void init();
-        void 
+    // find which (if any required extensions are supported, a OpenGL context MUST be current before calling this)
+    void memory_info_init();
 
-    };
+    MemoryLimits memory_info_report_limits();
+    void memory_info_print(const MemoryLimits& ml);
+
+    MemoryEvictionInfo memory_info_report_eviction();
+    void memory_info_print(const MemoryEvictionInfo& mei);
+
+    void memory_info_print(const MemoryLimits& ml, const MemoryEvictionInfo& mei);
 }
-
-#endif
