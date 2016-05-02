@@ -1,8 +1,10 @@
 #include "gputimer.h"
-
+#include "checkextensions.h"
 #include <iostream>
 
 using namespace ogle;
+
+bool gpuTimer::extensionSupported = false;
 
 gpuTimer::gpuTimer()
 {
@@ -16,8 +18,19 @@ gpuTimer::~gpuTimer()
     }
 }
 
+void gpuTimer::static_init()
+{
+    std::vector<std::string> exts = {"GL_ARB_timer_query"};
+    std::vector<bool> supported = ogle::extensions_supported(exts);
+    extensionSupported = supported[0];
+}
+
+
 void gpuTimer::init()
 {
+    if (false == extensionSupported)
+        return;
+
     const int default_size = 5;
     queries.reserve(default_size);
 
@@ -35,6 +48,9 @@ void gpuTimer::init()
 
 void gpuTimer::start()
 {
+    if (false == extensionSupported)
+        return;
+
     activeIdx = queries.size();
     for (size_t i=0; i<queries.size(); ++i) {
         if (queries[i].in_use == false) {
@@ -61,6 +77,9 @@ void gpuTimer::start()
 
 void gpuTimer::end()
 {
+    if (false == extensionSupported)
+        return;
+
     glQueryCounter(queries[activeIdx].end, GL_TIMESTAMP);
     sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 
@@ -72,6 +91,9 @@ void gpuTimer::end()
 
 double gpuTimer::elaspedTime()
 {
+    if (false == extensionSupported)
+        return -1;
+
     GLint start_available;
     GLint end_available;
 
@@ -110,6 +132,9 @@ double gpuTimer::elaspedTime()
 
 int gpuTimer::activeQueries()
 {
+    if (false == extensionSupported)
+        return -1;
+
     int result = 0;
     for (size_t i=0; i<queries.size(); ++i){
         if (queries[i].in_use == true) {

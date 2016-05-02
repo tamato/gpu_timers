@@ -18,6 +18,10 @@
 #include "common/renderable.h"
 #include "common/memory_info.h"
 
+#define CHECKEXTENSIONS_IMPLEMENTATION
+#include "common/checkextensions.h"
+
+
 #include <pnglite.h>
 
 using namespace std;
@@ -42,7 +46,7 @@ glm::vec2 PrevMousePos;
 
 Renderable Cube;
 ProgramObject CubeShader;
-const unsigned int CubeCount = 15;
+const unsigned int CubeCount = 5;
 glm::mat4x4 Models[CubeCount];
 glm::vec4 Colors[CubeCount];
 GLuint NormalMaps[CubeCount];

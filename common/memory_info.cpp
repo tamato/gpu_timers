@@ -57,6 +57,8 @@ GL_RENDERBUFFER_FREE_MEMORY_ATI
 
 #include <glad/glad.h>
 
+#include "checkextensions.h"
+
 namespace ogle
 {
     namespace 
@@ -122,35 +124,18 @@ namespace ogle
         limits_func = limits_not_supported;
         evict_func = eviction_not_supported;
 
-        std::vector<const char*> check_extensions;
-        check_extensions.push_back("GL_NVX_gpu_memory_info");
-        check_extensions.push_back("GL_ATI_meminfo");
-
-        GLint n, i, j;
-        glGetIntegerv(GL_NUM_EXTENSIONS, &n);
-        for (i = 0; i < n; i++) {
-            const char* ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
-
-            bool found = false;
-            for (j=0; j<(GLint)check_extensions.size(); ++j){
-                const char* supported = strstr(ext, check_extensions[j]);
-                if (0 != supported){
-
-                    if (j == 0){
-                        limits_func = limits_nvidia;
-                        evict_func = eviction_nvidia;
-                    }
-                    else if (j == 1){
-                        limits_func = limits_ati;
-                        evict_func = eviction_not_supported;
-                    }
-
-                    found = true;
-                    break;
-                }
-            }
-
-            if (found) break;
+        std::vector<std::string> exts;
+        exts.push_back("GL_NVX_gpu_memory_info");
+        exts.push_back("GL_ATI_meminfo");
+        
+        std::vector<bool> supported = ogle::extensions_supported(exts);
+        
+        if (supported[0]){
+            limits_func = limits_nvidia;
+            evict_func = eviction_nvidia;
+        }
+        else if (supported[1]){
+            limits_func = limits_ati;
         }
     }
 

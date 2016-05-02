@@ -22,6 +22,8 @@ namespace ogle
         gpuTimer();
         ~gpuTimer();
 
+        static void static_init();
+
         void init();
         void start();
         void end();
@@ -41,6 +43,8 @@ namespace ogle
         GLsync sync;
         GLuint activeIdx;
         std::vector<gpuQueryTimer> queries;
+
+        static bool extensionSupported;
     };
 }
 #endif // GPUTIMER_H
